@@ -1,30 +1,57 @@
 package com.netomarin.demo.splashscreen;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 
 public class SplashScreenActivity extends Activity {
-	
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-        
-        TimerTask timerTask = new TimerTask() {
+
+	Class<?> activityClass;
+	Class[] paramTypes = { Integer.TYPE, Integer.TYPE };
+
+	Method overrideAnimation = null;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
+
+		try {
+			activityClass = Class.forName("android.app.Activity");
+			overrideAnimation = activityClass.getDeclaredMethod(
+					"overridePendingTransition", paramTypes);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		Handler handler = new Handler();
+		handler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				//Iniciando outra Activity
-				Intent i = new Intent();
-				i.setClassName("com.netomarin.demo.splashscreen", "com.netomarin.demo.splashscreen.HomeActivity");
+				Intent i = new Intent(SplashScreenActivity.this,
+						HomeActivity.class);
 				startActivity(i);
+				finish();
+				if (overrideAnimation != null) {
+					try {
+						overrideAnimation.invoke(SplashScreenActivity.this, android.R.anim.fade_in,
+								android.R.anim.fade_out);
+					} catch (IllegalArgumentException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InvocationTargetException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 			}
-		};
-		
-		Timer timer = new Timer();
-		timer.schedule(timerTask, 2000);
-    }
+		}, 2000);
+	}
 }
